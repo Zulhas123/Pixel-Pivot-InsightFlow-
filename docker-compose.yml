@@ -1,0 +1,78 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: insightflow
+      POSTGRES_USER: insightflow
+      POSTGRES_PASSWORD: insightflow
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  backend:
+    build:
+      context: ./backend
+    environment:
+      APP_ENV: dev
+      DATABASE_URL: postgresql+asyncpg://insightflow:insightflow@postgres:5432/insightflow
+      SYNC_DATABASE_URL: postgresql+psycopg://insightflow:insightflow@postgres:5432/insightflow
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET_KEY: change-me-in-prod
+      JWT_ACCESS_TOKEN_EXPIRE_MINUTES: "60"
+      RATE_LIMIT_PER_MINUTE: "120"
+      CORS_ORIGINS: http://localhost:3000,http://localhost:8080
+    depends_on:
+      - postgres
+      - redis
+    ports:
+      - "8000:8000"
+
+  celery_worker:
+    build:
+      context: ./backend
+    command: celery -A app.worker.celery_app worker --loglevel=INFO
+    environment:
+      DATABASE_URL: postgresql+asyncpg://insightflow:insightflow@postgres:5432/insightflow
+      SYNC_DATABASE_URL: postgresql+psycopg://insightflow:insightflow@postgres:5432/insightflow
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET_KEY: change-me-in-prod
+    depends_on:
+      - postgres
+      - redis
+
+  frontend:
+    build:
+      context: ./frontend
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:8080/api
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+
+  nginx:
+    image: nginx:1.27-alpine
+    depends_on:
+      - backend
+      - frontend
+      - metabase
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+
+  metabase:
+    image: metabase/metabase:v0.49.20
+    depends_on:
+      - postgres
+    ports:
+      - "3001:3000"
+
+volumes:
+  postgres_data:
