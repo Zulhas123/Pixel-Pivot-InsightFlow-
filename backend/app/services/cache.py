@@ -23,3 +23,26 @@ async def cache_get_json(key: str) -> Any | None:
 async def cache_set_json(key: str, value: Any, ttl_seconds: int) -> None:
     await _redis.set(key, json.dumps(value), ex=ttl_seconds)
 
+
+async def cache_delete(key: str) -> None:
+    await _redis.delete(key)
+
+
+async def cache_delete_prefix(prefix: str) -> int:
+    """
+    Delete all keys that start with `prefix`.
+
+    Uses SCAN to avoid blocking Redis. Returns number of keys deleted.
+    """
+
+    cursor = 0
+    deleted = 0
+    pattern = f"{prefix}*"
+    while True:
+        cursor, keys = await _redis.scan(cursor=cursor, match=pattern, count=200)
+        if keys:
+            deleted += int(await _redis.delete(*keys))
+        if cursor == 0:
+            break
+    return deleted
+

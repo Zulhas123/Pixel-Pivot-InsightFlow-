@@ -27,6 +27,7 @@ export default function Dashboard() {
   const [kpis, setKpis] = useState<KPIs | null>(null);
   const [trend, setTrend] = useState<TrendPoint[]>([]);
   const [finance, setFinance] = useState<FinanceSummary | null>(null);
+  const [mutating, setMutating] = useState(false);
   const token = useMemo(() => (typeof window === "undefined" ? null : localStorage.getItem("token")), []);
   const role = useMemo(() => (typeof window === "undefined" ? null : (localStorage.getItem("role") as Role | null)), []);
 
@@ -67,6 +68,26 @@ export default function Dashboard() {
     };
   }, [router]);
 
+  async function createDemoActivity() {
+    setMutating(true);
+    try {
+      const res = await fetch(`${API_BASE}/demo/activity`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+      });
+      // Even if this fails, keep UI stable; user can check API logs.
+      if (res.ok) {
+        // Reload immediately so values update without waiting for the next poll tick.
+        const [k, t, f] = await Promise.all([apiGet("/analytics/kpis"), apiGet("/analytics/sales-trend?days=14"), apiGet("/analytics/finance-summary")]);
+        if (k) setKpis(k);
+        if (t) setTrend(t);
+        if (f) setFinance(f);
+      }
+    } finally {
+      setMutating(false);
+    }
+  }
+
   function logout() {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
@@ -101,6 +122,21 @@ export default function Dashboard() {
             <a href="http://localhost:8080/metabase/" target="_blank" style={{ color: "#b9c9ff", textDecoration: "none", fontSize: 13 }}>
               Open Metabase
             </a>
+            <button
+              onClick={createDemoActivity}
+              disabled={mutating}
+              style={{
+                padding: "8px 12px",
+                borderRadius: 10,
+                border: "1px solid #2a3a60",
+                background: mutating ? "transparent" : "#1a2a4a",
+                color: "#e8eefc",
+                cursor: mutating ? "default" : "pointer"
+              }}
+              title="Creates a new paid order + delivery and clears analytics cache so KPIs change immediately"
+            >
+              {mutating ? "Working..." : "Generate activity"}
+            </button>
             <button
               onClick={logout}
               style={{ padding: "8px 12px", borderRadius: 10, border: "1px solid #2a3a60", background: "transparent", color: "#e8eefc" }}
@@ -219,4 +255,3 @@ function KpiCard({ title, value }: { title: string; value: string }) {
     </div>
   );
 }
-

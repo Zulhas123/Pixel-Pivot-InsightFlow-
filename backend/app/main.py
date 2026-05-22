@@ -9,6 +9,7 @@ from slowapi.util import get_remote_address
 from app.api.routers.analytics import router as analytics_router
 from app.api.routers.auth import router as auth_router
 from app.api.routers.customers import router as customers_router
+from app.api.routers.demo import router as demo_router
 from app.api.routers.deliveries import router as deliveries_router
 from app.api.routers.orders import router as orders_router
 from app.api.routers.payments import router as payments_router
@@ -38,6 +39,7 @@ app.include_router(orders_router)
 app.include_router(payments_router)
 app.include_router(deliveries_router)
 app.include_router(analytics_router)
+app.include_router(demo_router)
 app.include_router(reports_router)
 app.include_router(tasks_router)
 

@@ -90,7 +90,8 @@ services:
       - superset_home:/app/superset_home
     ports:
       - "8088:8088"
-    command: /bin/sh -c "superset db upgrade && superset run -h 0.0.0.0 -p 8088"
+    # Run the server; initialize Superset (DB migrations + admin user) via `superset-init`.
+    command: /bin/sh -c "superset run -h 0.0.0.0 -p 8088"
 
   superset-init:
     image: apache/superset:3.1.0
@@ -104,7 +105,7 @@ services:
     volumes:
       - superset_home:/app/superset_home
     entrypoint: /bin/sh
-    command: -c "superset db upgrade && superset fab create-admin --username admin --firstname Admin --lastname User --email admin@local --password Admin1234! && superset init"
+    command: -c "superset db upgrade && (superset fab create-admin --username admin --firstname Admin --lastname User --email admin@local --password Admin1234! || true) && superset init"
 
 volumes:
   postgres_data:

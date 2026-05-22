@@ -125,7 +125,7 @@ docker compose --profile superset up -d superset
 docker compose --profile superset run --rm superset-init
 ```
 
-Open Superset: http://localhost:8088/ (demo admin: `admin` / `Admin1234!`)
+Open Superset: http://localhost:8088/ (demo login: username `admin`, password `Admin1234!`)
 
 ## Backend API (what the frontend uses)
 
