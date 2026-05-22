@@ -44,5 +44,5 @@ app.include_router(tasks_router)
 
 @app.get("/health")
 @limiter.limit("60/minute")
-async def health(_: Request):
+async def health(request: Request):
     return {"status": "ok"}

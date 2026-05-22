@@ -24,15 +24,40 @@ def main() -> None:
         _ensure_user(s, "manager@local", "Manager User", "Manager", "Manager1234!")
         agent = _ensure_user(s, "agent@local", "Delivery Agent", "DeliveryAgent", "Agent1234!")
 
-        cust = Customer(name="Acme Corp", email="billing@acme.test", phone="+1-555-0100")
-        s.add(cust)
-        s.flush()
+        cust = _ensure_customer(s, name="Acme Corp", email="billing@acme.test", phone="+1-555-0100")
 
-        p1 = Product(sku="SKU-001", name="Wireless Mouse", category="Electronics", price=Decimal("25.00"), cost=Decimal("12.00"), stock_qty=200)
-        p2 = Product(sku="SKU-002", name="Keyboard", category="Electronics", price=Decimal("45.00"), cost=Decimal("25.00"), stock_qty=150)
-        p3 = Product(sku="SKU-003", name="USB-C Cable", category="Accessories", price=Decimal("10.00"), cost=Decimal("3.00"), stock_qty=500)
-        s.add_all([p1, p2, p3])
-        s.flush()
+        p1 = _ensure_product(
+            s,
+            sku="SKU-001",
+            name="Wireless Mouse",
+            category="Electronics",
+            price=Decimal("25.00"),
+            cost=Decimal("12.00"),
+            stock_qty=200,
+        )
+        p2 = _ensure_product(
+            s,
+            sku="SKU-002",
+            name="Keyboard",
+            category="Electronics",
+            price=Decimal("45.00"),
+            cost=Decimal("25.00"),
+            stock_qty=150,
+        )
+        p3 = _ensure_product(
+            s,
+            sku="SKU-003",
+            name="USB-C Cable",
+            category="Accessories",
+            price=Decimal("10.00"),
+            cost=Decimal("3.00"),
+            stock_qty=500,
+        )
+
+        existing_order_id = s.execute(select(Order.id).where(Order.customer_id == cust.id).limit(1)).scalar_one_or_none()
+        if existing_order_id is not None:
+            s.commit()
+            return
 
         now = datetime.now(timezone.utc)
         for i in range(25):
@@ -70,6 +95,45 @@ def _ensure_user(s: Session, email: str, full_name: str, role: str, password: st
     s.add(user)
     s.flush()
     return user
+
+
+def _ensure_customer(s: Session, name: str, email: str, phone: str) -> Customer:
+    cust = s.execute(select(Customer).where(Customer.email == email)).scalar_one_or_none()
+    if cust is None:
+        cust = Customer(name=name, email=email, phone=phone)
+        s.add(cust)
+        s.flush()
+        return cust
+
+    cust.name = name
+    cust.phone = phone
+    s.flush()
+    return cust
+
+
+def _ensure_product(
+    s: Session,
+    sku: str,
+    name: str,
+    category: str,
+    price: Decimal,
+    cost: Decimal,
+    stock_qty: int,
+) -> Product:
+    product = s.execute(select(Product).where(Product.sku == sku)).scalar_one_or_none()
+    if product is None:
+        product = Product(sku=sku, name=name, category=category, price=price, cost=cost, stock_qty=stock_qty)
+        s.add(product)
+        s.flush()
+        return product
+
+    product.name = name
+    product.category = category
+    product.price = price
+    product.cost = cost
+    product.stock_qty = stock_qty
+    s.flush()
+    return product
 
 
 if __name__ == "__main__":

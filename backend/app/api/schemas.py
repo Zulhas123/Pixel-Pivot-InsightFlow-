@@ -12,7 +12,7 @@ class Token(BaseModel):
 
 
 class UserCreate(BaseModel):
-    email: EmailStr
+    email: str = Field(min_length=3, max_length=255, pattern=r"^.+@.+$")
     full_name: str
     password: str = Field(min_length=8)
     role: str = Field(pattern="^(Admin|Manager|DeliveryAgent)$")
@@ -20,7 +20,7 @@ class UserCreate(BaseModel):
 
 class UserOut(BaseModel):
     id: int
-    email: EmailStr
+    email: str
     full_name: str
     role: str
     is_active: bool
@@ -28,7 +28,7 @@ class UserOut(BaseModel):
 
 
 class LoginIn(BaseModel):
-    email: EmailStr
+    email: str = Field(min_length=3, max_length=255, pattern=r"^.+@.+$")
     password: str
 
 

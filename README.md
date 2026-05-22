@@ -14,7 +14,7 @@ Minimal enterprise-style BI + analytics platform to test BI tooling with a reali
 
 1) Start everything:
 ```bash
-docker compose up --build
+docker compose up -d --build
 ```
 
 2) Run DB migrations:
@@ -27,10 +27,35 @@ docker compose exec backend alembic upgrade head
 docker compose exec backend python -m app.scripts.seed
 ```
 
+To watch logs:
+```bash
+docker compose logs -f backend
+```
+
+To stop:
+```bash
+docker compose down
+```
+
+To reset everything (drops DB data):
+```bash
+docker compose down -v
+docker compose up -d --build
+docker compose exec backend alembic upgrade head
+docker compose exec backend python -m app.scripts.seed
+```
+
 4) Open:
 - App (via Nginx): http://localhost:8080/
 - API docs (via Nginx): http://localhost:8080/api/docs
 - Metabase (via Nginx): http://localhost:8080/metabase/
+
+## Troubleshooting
+
+- `bash: alembic: command not found`: run Alembic inside Docker: `docker compose exec backend alembic upgrade head`
+- `service "backend" is not running`: check logs with `docker compose logs backend --tail 200`, then rebuild/restart with `docker compose up -d --build backend`
+- Windows Docker Desktop errors like `permission denied ... dockerDesktopLinuxEngine`: make sure Docker Desktop is running, and try running your shell as Administrator or adding your user to the `docker-users` group.
+- Seed fails with bcrypt/passlib errors: rebuild after pulling deps: `docker compose up -d --build backend`
 
 ## Demo users
 
@@ -62,6 +87,8 @@ Roles:
    - **Inventory status**: `products.stock_qty` sorted ascending
 
 Tip: Metabase can join `orders` -> `order_items` -> `products` to slice revenue by category.
+
+For a full end-to-end “proof” walkthrough (Metabase numbers matching backend + frontend), see: `docs/BI_INTEGRATION.md`.
 
 ## Backend API (what the frontend uses)
 
