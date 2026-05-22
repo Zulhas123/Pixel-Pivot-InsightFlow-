@@ -139,3 +139,16 @@ class InventoryStatusPoint(BaseModel):
     name: str
     stock_qty: int
 
+
+class FinanceByMethodPoint(BaseModel):
+    method: str
+    paid_total: Decimal
+    payments_count: int
+
+
+class FinanceSummaryOut(BaseModel):
+    paid_total: Decimal
+    payments_count: int
+    avg_payment: Decimal
+    paid_by_method: list[FinanceByMethodPoint]
+

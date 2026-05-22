@@ -3,6 +3,8 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { decodeJwtPayload } from "./lib/auth";
+
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api";
 
 export default function Home() {
@@ -13,7 +15,11 @@ export default function Home() {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (token) router.push("/dashboard");
+    if (token) {
+      const payload = decodeJwtPayload(token);
+      if (payload?.role === "DeliveryAgent") router.push("/agent");
+      else router.push("/dashboard");
+    }
   }, [router]);
 
   async function onLogin(e: React.FormEvent) {
@@ -30,7 +36,10 @@ export default function Home() {
     }
     const data = await res.json();
     localStorage.setItem("token", data.access_token);
-    router.push("/dashboard");
+    const payload = decodeJwtPayload(data.access_token);
+    if (payload?.role) localStorage.setItem("role", payload.role);
+    if (payload?.role === "DeliveryAgent") router.push("/agent");
+    else router.push("/dashboard");
   }
 
   return (

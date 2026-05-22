@@ -30,7 +30,7 @@ def export_kpis_pdf(kpis: dict) -> tuple[bytes, str, str]:
     x = 72
     y = 720
     c.setFont("Helvetica-Bold", 14)
-    c.drawString(x, y, "Pixel Pivot InsightFlow — KPI Report")
+    c.drawString(x, y, "Pixel Pivot InsightFlow - KPI Report")
     y -= 36
     c.setFont("Helvetica", 11)
     for label, value in _kpis_pretty_lines(kpis):

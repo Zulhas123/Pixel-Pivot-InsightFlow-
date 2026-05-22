@@ -74,5 +74,38 @@ services:
     ports:
       - "3001:3000"
 
+  # Optional alternative BI tool (in addition to Metabase)
+  # Start with: docker compose --profile superset up -d --build
+  # Then initialize once: docker compose --profile superset run --rm superset-init
+  superset:
+    image: apache/superset:3.1.0
+    profiles: ["superset"]
+    depends_on:
+      - postgres
+    environment:
+      SUPERSET_SECRET_KEY: change-me-in-prod
+      SUPERSET_LOAD_EXAMPLES: "no"
+      SUPERSET_ENV: production
+    volumes:
+      - superset_home:/app/superset_home
+    ports:
+      - "8088:8088"
+    command: /bin/sh -c "superset db upgrade && superset run -h 0.0.0.0 -p 8088"
+
+  superset-init:
+    image: apache/superset:3.1.0
+    profiles: ["superset"]
+    depends_on:
+      - postgres
+    environment:
+      SUPERSET_SECRET_KEY: change-me-in-prod
+      SUPERSET_LOAD_EXAMPLES: "no"
+      SUPERSET_ENV: production
+    volumes:
+      - superset_home:/app/superset_home
+    entrypoint: /bin/sh
+    command: -c "superset db upgrade && superset fab create-admin --username admin --firstname Admin --lastname User --email admin@local --password Admin1234! && superset init"
+
 volumes:
   postgres_data:
+  superset_home:
